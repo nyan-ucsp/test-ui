@@ -1,6 +1,6 @@
 "use client";;
-import { Badge, Button, Dropdown, Modal, Pagination, Select, TextInput } from "flowbite-react";
-import { HiOutlineDotsVertical } from "react-icons/hi";
+import { Alert, Badge, Button, Dropdown, Label, Modal, Pagination, Select, TextInput } from "flowbite-react";
+import { HiOutlineDotsVertical, HiOutlineExclamationCircle } from "react-icons/hi";
 import { Icon } from "@iconify/react";
 import { Table } from "flowbite-react";
 import Image from "next/image";
@@ -56,6 +56,7 @@ const Albums = () => {
   const [responseData, setResponseData] = useState<ResponseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [filterData, setFilterData] = useState<RequestBody>({
@@ -71,10 +72,19 @@ const Albums = () => {
     uuid: "",
   })
 
-  const [openModal, setOpenModal] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDeleteSuccess(null);
+    }, 1500);
 
-  function onCloseModal() {
-    setOpenModal(false);
+    return () => clearTimeout(timer);
+  }, [deleteSuccess]);
+
+  const [openFilterModal, setOpenFilterModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState<string | null>(null);
+
+  function onCloseFilterModal() {
+    setOpenFilterModal(false);
   }
 
   const isFiltering = () => {
@@ -85,12 +95,12 @@ const Albums = () => {
     filterData.completed = null; filterData.enable = null; filterData.broken = null; filterData.id = 0; filterData.min_age = 0; filterData.tags = ""; filterData.title = ""; filterData.uuid = "";
     setFilterData(filterData);
     fetchAlbums();
-    setOpenModal(false);
+    setOpenFilterModal(false);
   };
 
   const filtering = () => {
     fetchAlbums();
-    setOpenModal(false);
+    setOpenFilterModal(false);
   };
 
   //!Fetch Albums
@@ -116,6 +126,29 @@ const Albums = () => {
     }
   };
 
+  const deleteAlbums = async (uuid: string) => {
+    setError(null)
+    try {
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(uuid);
+      const res = await fetch(url, {
+        method: 'Delete',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': apiKey,
+        },
+        body: JSON.stringify(filterData),
+      });
+      if (res.status == 204) {
+        setDeleteSuccess("Successfully Deleted");
+        fetchAlbums();
+      }
+    } catch (error) {
+      setError("Something was wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleItemsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     let limit = Number(event.target.value);
     filterData.limit = limit;
@@ -127,7 +160,7 @@ const Albums = () => {
   }, [currentPage, itemsPerPage]);
 
   const onPageChange = (page: number) => {
-    filterData.offset = page;
+    filterData.offset = (page - 1) * filterData.limit;
     setCurrentPage(page);
   };
 
@@ -165,98 +198,123 @@ const Albums = () => {
                 <Table.HeadCell>Status</Table.HeadCell>
                 <Table.HeadCell>
                   <span className="h-10 w-10 hover:text-primary hover:bg-lightprimary rounded-full flex justify-center items-center cursor-pointer relative">
-                    <Icon icon="flowbite:filter-outline" height={20} onClick={() => setOpenModal(true)} />
-                    <Modal show={openModal} size="md" onClose={onCloseModal} popup>
+                    <Icon icon="flowbite:filter-outline" height={20} onClick={() => setOpenFilterModal(true)} />
+                    <Modal show={openFilterModal} size="md" onClose={onCloseFilterModal} popup>
                       <Modal.Header />
                       <Modal.Body>
                         <div className="space-y-6">
                           <h3 className="text-xl font-medium text-gray-900 dark:text-white">Filter Albums</h3>
                           <div>
-                            <TextInput
-                              id="title"
-                              placeholder="Title"
-                              defaultValue={filterData.title}
-                              onChange={(event) => {
+                            <div className="mb-2 block">
+                              <Label htmlFor="title" value="Title" />
+                            </div>
+                            <div>
+                              <TextInput
+                                id="title"
+                                placeholder="Title"
+                                defaultValue={filterData.title}
+                                onChange={(event) => {
+                                  var data = filterData;
+                                  data.title = event.target.value;
+                                  setFilterData(data)
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="mb-2 block">
+                              <Label htmlFor="uuid" value="UUID" />
+                            </div>
+                            <div>
+                              <TextInput
+                                id="uuid"
+                                placeholder="UUID"
+                                defaultValue={filterData.uuid}
+                                onChange={(event) => {
+                                  var data = filterData;
+                                  data.uuid = event.target.value;
+                                  setFilterData(data)
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="mb-2 block">
+                              <Label htmlFor="type" value="Type" />
+                            </div>
+                            <div>
+                              <Select id="type" required className="select-rounded" defaultValue={filterData.completed != null ? filterData.completed ? 2 : 1 : 0} onChange={(event) => {
                                 var data = filterData;
-                                data.title = event.target.value;
+                                switch (event.target.value) {
+                                  case "1":
+                                    data.completed = false;
+                                    break;
+                                  case "2":
+                                    data.completed = true;
+                                    break;
+                                  default:
+                                    data.completed = null;
+                                    break;
+                                }
                                 setFilterData(data)
-                              }}
-                            />
+                              }}>
+                                <option value={0}>None</option>
+                                <option value={1}>Ongoing</option>
+                                <option value={2}>Complete</option>
+                              </Select>
+                            </div>
                           </div>
                           <div>
-                            <TextInput
-                              id="uuid"
-                              placeholder="UUID"
-                              defaultValue={filterData.uuid}
-                              onChange={(event) => {
+                            <div className="mb-2 block">
+                              <Label htmlFor="enable" value="Visibility" />
+                            </div>
+                            <div>
+                              <Select id="enable" required className="select-rounded" defaultValue={filterData.enable != null ? filterData.enable ? 2 : 1 : 0} onChange={(event) => {
                                 var data = filterData;
-                                data.uuid = event.target.value;
+                                switch (event.target.value) {
+                                  case "1":
+                                    data.enable = false;
+                                    break;
+                                  case "2":
+                                    data.enable = true;
+                                    break;
+                                  default:
+                                    data.enable = null;
+                                    break;
+                                }
                                 setFilterData(data)
-                              }}
-                            />
+                              }}>
+                                <option value={0}>None</option>
+                                <option value={1}>Disable</option>
+                                <option value={2}>Enable</option>
+                              </Select>
+                            </div>
                           </div>
                           <div>
-                            <Select id="complete" required className="select-rounded" defaultValue={filterData.completed != null ? filterData.completed ? 2 : 1 : 0} onChange={(event) => {
-                              var data = filterData;
-                              switch (event.target.value) {
-                                case "1":
-                                  data.completed = false;
-                                  break;
-                                case "2":
-                                  data.completed = true;
-                                  break;
-                                default:
-                                  data.completed = null;
-                                  break;
-                              }
-                              setFilterData(data)
-                            }}>
-                              <option value={0}>None</option>
-                              <option value={1}>Ongoing</option>
-                              <option value={2}>Complete</option>
-                            </Select>
-                          </div>
-                          <div>
-                            <Select id="enable" required className="select-rounded" defaultValue={filterData.enable != null ? filterData.enable ? 2 : 1 : 0} onChange={(event) => {
-                              var data = filterData;
-                              switch (event.target.value) {
-                                case "1":
-                                  data.enable = false;
-                                  break;
-                                case "2":
-                                  data.enable = true;
-                                  break;
-                                default:
-                                  data.enable = null;
-                                  break;
-                              }
-                              setFilterData(data)
-                            }}>
-                              <option value={0}>None</option>
-                              <option value={1}>Disable</option>
-                              <option value={2}>Enable</option>
-                            </Select>
-                          </div>
-                          <div>
-                            <Select id="broken" required className="select-rounded" defaultValue={filterData.broken != null ? filterData.broken ? 2 : 1 : 0} onChange={(event) => {
-                              var data = filterData;
-                              switch (event.target.value) {
-                                case "1":
-                                  data.broken = false;
-                                  break;
-                                case "2":
-                                  data.broken = true;
-                                  break;
-                                default:
-                                  data.broken = null;
-                                  break;
-                              }
-                              setFilterData(data)
-                            }}>
-                              <option value={0}>None</option>
-                              <option value={1}>Good</option>
-                              <option value={2}>Broken</option>
-                            </Select>
+                            <div className="mb-2 block">
+                              <Label htmlFor="broken" value="Status" />
+                            </div>
+                            <div>
+                              <Select id="broken" required className="select-rounded" defaultValue={filterData.broken != null ? filterData.broken ? 2 : 1 : 0} onChange={(event) => {
+                                var data = filterData;
+                                switch (event.target.value) {
+                                  case "1":
+                                    data.broken = false;
+                                    break;
+                                  case "2":
+                                    data.broken = true;
+                                    break;
+                                  default:
+                                    data.broken = null;
+                                    break;
+                                }
+                                setFilterData(data)
+                              }}>
+                                <option value={0}>None</option>
+                                <option value={1}>Good</option>
+                                <option value={2}>Broken</option>
+                              </Select>
+                            </div>
                           </div>
                           <div className="flex justify-between">
                             <Button color={"red"} onClick={resetFiltering} className="w-fit mt-8 mx-auto">Clear Filter</Button>
@@ -310,11 +368,17 @@ const Albums = () => {
                           )}
                         >
                           {tableActionData.map((items, index) => (
-                            <Dropdown.Item key={index} className="flex gap-3">
+                            <Dropdown.Item key={index} className="flex gap-3" onClick={() => {
+                              console.log(index);
+                              if (index == 2) {
+                                setOpenDeleteModal(item.uuid);
+                              }
+                            }}>
                               {" "}
                               <Icon icon={`${items.icon}`} height={18} />
                               <span>{items.listtitle}</span>
                             </Dropdown.Item>
+
                           ))}
                         </Dropdown>
                       </Table.Cell>
@@ -343,6 +407,56 @@ const Albums = () => {
               onPageChange={onPageChange}
             />
           </div>
+          <Modal show={openDeleteModal != null} size="md" onClose={() => setOpenDeleteModal(null)} popup>
+            <Modal.Header />
+            <Modal.Body>
+              <div className="text-center">
+                <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                  Are you sure you want to delete this album?
+                </h3>
+                <div className="flex justify-center gap-4">
+                  <Button color="failure" onClick={() => {
+                    setOpenDeleteModal(null)
+                    deleteAlbums(openDeleteModal!);
+                  }}>
+                    {"Yes, I'm sure"}
+                  </Button>
+                  <Button color="gray" onClick={() => setOpenDeleteModal(null)}>
+                    No, cancel
+                  </Button>
+                </div>
+              </div>
+            </Modal.Body>
+          </Modal>
+          {error && <Alert color="failure" >
+            <span className="font-medium" style={{ display: 'flex', alignItems: 'center' }}>
+              <Icon icon="solar:info-circle-linear" height={16} />
+              <span className="ml-2">{error}</span>
+            </span>
+          </Alert>}
+          {deleteSuccess &&
+            <div
+              style={{
+                position: 'fixed',
+                bottom: '20px',
+                left: '20px',
+                backgroundColor: '#d4edda',
+                color: '#155724',
+                border: '1px solid #c3e6cb',
+                borderRadius: '4px',
+                padding: '10px 15px',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                zIndex: 1000,
+              }}
+            >
+              <span className="font-medium" style={{ display: 'flex', alignItems: 'center' }}>
+                <Icon icon="solar:info-circle-linear" height={16} />
+                <span className="ml-2">{deleteSuccess}</span>
+              </span>
+            </div>}
         </div>
       </div >
     </>

@@ -196,9 +196,9 @@ const page = () => {
                 </div>
                 <div>
                   <div className="mb-2 block">
-                    <Label htmlFor="status" value="Status" />
+                    <Label htmlFor="type" value="Type" />
                   </div>
-                  <Select id="status" required className="select-rounded" onChange={(e) => {
+                  <Select id="type" required className="select-rounded" onChange={(e) => {
                     if (e.target.value === "ongoing") {
                       setComplete(false)
                     } else {
@@ -222,8 +222,7 @@ const page = () => {
               </div>
             </div>
             <div className="col-span-12 flex gap-3 justify-end">
-              <Button disabled={loading} color={loading ? "muted" : "failure"}>Cancel</Button>
-              <Button disabled={loading} color={loading ? "muted" : "primary"} onClick={createAlbum}>Submit</Button>
+              <Button disabled={loading} color={loading ? "muted" : "primary"} onClick={createAlbum}>Save</Button>
             </div>
           </div>
         </div>
