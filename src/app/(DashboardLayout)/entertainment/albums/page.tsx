@@ -10,8 +10,9 @@ import { decrypt } from "@/utils/encryption/encryption";
 import SomethingWasWrong from "../../layout/shared/reload/something_was_wrong";
 import { MdOutlineCreateNewFolder } from "react-icons/md";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-type RequestBody = {
+type FilterData = {
   completed: boolean | null;
   enable: boolean | null;
   broken: boolean | null;
@@ -50,6 +51,7 @@ type AlbumData = {
 };
 
 const Albums = () => {
+  const router = useRouter();
   var static_url = (process.env.NEXT_PUBLIC_STATIC_API_URL ?? "");
   var chiperText = localStorage.getItem('api-key') ?? "";
   var apiKey = decrypt({ data: chiperText })
@@ -59,7 +61,7 @@ const Albums = () => {
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [filterData, setFilterData] = useState<RequestBody>({
+  const [filterData, setFilterData] = useState<FilterData>({
     completed: null,
     enable: null,
     broken: null,
@@ -168,7 +170,7 @@ const Albums = () => {
   const tableActionData = [
     {
       icon: "solar:add-circle-outline",
-      listtitle: "Add",
+      listtitle: "Add Episode",
     },
     {
       icon: "solar:pen-new-square-broken",
@@ -369,7 +371,9 @@ const Albums = () => {
                         >
                           {tableActionData.map((items, index) => (
                             <Dropdown.Item key={index} className="flex gap-3" onClick={() => {
-                              console.log(index);
+                              if (index == 1) {
+                                router.push(`/entertainment/albums/edit/${item.uuid}`);
+                              }
                               if (index == 2) {
                                 setOpenDeleteModal(item.uuid);
                               }
