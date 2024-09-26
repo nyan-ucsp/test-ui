@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-const page = () => {
+const Page = () => {
   const router = useRouter();
   var static_url = (process.env.NEXT_PUBLIC_STATIC_API_URL ?? "");
   var chiperText = localStorage.getItem('api-key') ?? "";
@@ -250,4 +250,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

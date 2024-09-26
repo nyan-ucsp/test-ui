@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-export default function page({ params }: {
+export default function Page({ params }: {
   params: {
     uuid: string;
   }
@@ -27,7 +27,8 @@ export default function page({ params }: {
 
   useEffect(() => {
     fetchAlbum();
-  }, [useRouter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   type AlbumData = {
     id: number;

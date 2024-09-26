@@ -119,6 +119,7 @@ const Albums = () => {
         },
         body: JSON.stringify(filterData),
       });
+      console.log(res.status);
       const result = await res.json();
       setResponseData(result || null);
     } catch (error) {
@@ -159,6 +160,7 @@ const Albums = () => {
 
   useEffect(() => {
     fetchAlbums();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, itemsPerPage]);
 
   const onPageChange = (page: number) => {

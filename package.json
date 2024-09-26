@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start --host=127.0.0.1",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -31,6 +31,8 @@
     "@types/react": "18",
     "@types/react-dom": "18",
     "@types/react-is": "18.3.0",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.13",
     "postcss": "8",
     "tailwindcss": "3.4.4",
     "typescript": "5"
