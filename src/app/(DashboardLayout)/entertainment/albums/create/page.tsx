@@ -26,11 +26,11 @@ const Page = () => {
   type AlbumFormData = {
     title: string;
     description: string;
-    releasedAt: Date;
+    release_at: Date;
     tags: string;
     enable: boolean;
     completed: boolean;
-    minAge: number;
+    min_age: Number;
     cover: File;
     images: FileList | null;
   }
@@ -44,13 +44,13 @@ const Page = () => {
         const albumData: AlbumFormData = {
           title: title,
           description: description,
-          releasedAt: releasedAt, // Or new Date().toISOString() if you prefer using Date objects
+          release_at: releasedAt, // Or new Date().toISOString() if you prefer using Date objects
           tags: tags,
           enable: enable,
           completed: complete,
-          minAge: minAge,
+          min_age: minAge,
           cover: selectedCover, // Assuming `selectedFile` is a File object
-          images: null,
+          images: selectedImages,
         };
         var formData = toFormData<AlbumFormData>(albumData)
 
@@ -185,8 +185,10 @@ const Page = () => {
                     value={minAge}
                     onChange={(event) => {
                       var a = event.target.value;
+                      console.log(a);
                       try {
-                        var age = parseInt(a, 10)
+                        var age = parseInt(a, 10);
+                        console.log(age);
                         if (age >= 0) {
                           setMinAge(age)
                         } else {
@@ -232,9 +234,9 @@ const Page = () => {
                   <div className="mb-2 block">
                     <Label htmlFor="releasedAt" value="Released At" />
                   </div>
-                  <Datepicker id="releasedAt" className="z-50" defaultValue={releasedAt?.toDateString()} onChange={(e) => {
-                    if (e.target.valueAsDate != null) {
-                      setReleasedAt(e.target.valueAsDate)
+                  <Datepicker id="releasedAt" className="z-50" defaultValue={releasedAt} onChange={(e) => {
+                    if (e != null) {
+                      setReleasedAt(e)
                     }
                   }} />
                 </div>

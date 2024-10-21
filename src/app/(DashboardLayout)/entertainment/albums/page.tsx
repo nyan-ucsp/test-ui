@@ -119,7 +119,6 @@ const Albums = () => {
         },
         body: JSON.stringify(filterData),
       });
-      console.log(res.status);
       const result = await res.json();
       setResponseData(result || null);
     } catch (error) {
@@ -171,8 +170,8 @@ const Albums = () => {
   /*Table Action*/
   const tableActionData = [
     {
-      icon: "solar:add-circle-outline",
-      listtitle: "Add Episode",
+      icon: "solar:document-text-outline",
+      listtitle: "Detail",
     },
     {
       icon: "solar:pen-new-square-broken",
@@ -344,6 +343,7 @@ const Albums = () => {
                             height={0}
                             alt="icon"
                             className="rounded-md"
+                            style={{ height: 'auto', width: 'auto' }}
                           />
                           <div className="truncat line-clamp-2 sm:text-wrap max-w-56">
                             <h5 className="text-md">{item.title}</h5>

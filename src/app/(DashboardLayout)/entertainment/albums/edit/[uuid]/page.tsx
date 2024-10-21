@@ -1,12 +1,14 @@
-"use client";
+"use client";;
 import Loading from "@/app/(DashboardLayout)/layout/shared/loading/Loading";
 import SomethingWasWrong from "@/app/(DashboardLayout)/layout/shared/reload/something_was_wrong";
 import { decrypt } from "@/utils/encryption/encryption";
 import { toFormData } from "@/utils/formdata/toformdata";
-import { Button, Datepicker, FileInput, Label, Select, TextInput } from "flowbite-react";
+import { Button, Datepicker, FileInput, Label, Modal, Select, TextInput } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { MdDelete, MdOutlineAddAPhoto } from "react-icons/md";
 
 export default function Page({ params }: {
   params: {
@@ -25,10 +27,15 @@ export default function Page({ params }: {
   const [loading, setLoading] = useState(false);
   const [albumData, setAlbumData] = useState<AlbumData | null>(null);
 
+
   useEffect(() => {
     fetchAlbum();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
+
+  function goToAddAlbumImages() {
+    router.push(`/entertainment/albums/edit/${params.uuid}/add-images`);
+  }
 
   type AlbumData = {
     id: number;
@@ -63,6 +70,33 @@ export default function Page({ params }: {
     cover: File | null;
   }
 
+  //? Delete Album Image
+  const [openDeleteModal, setOpenDeleteModal] = useState<string | null>(null);
+
+  const removeAlbumImages = async (img_src: string) => {
+    setError(null)
+    setLoading(true)
+    try {
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.uuid).concat("/remove-images");
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': apiKey,
+        },
+        body: JSON.stringify({ "images": [img_src] }),
+      });
+      if (res.status == 200) {
+        toast.success("Successfully Deleted");
+        fetchAlbum();
+      }
+    } catch (error) {
+      toast.error("Failed to delete image");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   //!Fetch Album
   const fetchAlbum = async () => {
     setInitLoading(true)
@@ -81,6 +115,7 @@ export default function Page({ params }: {
       if (albumData != null) {
         const parsedDate = new Date(albumData.released_at)
         setReleasedAt(parsedDate)
+        setBrokenAt(brokenAt)
       }
     } catch (error) {
       setError("Something was wrong");
@@ -132,8 +167,78 @@ export default function Page({ params }: {
   return (
     <>
       <Toaster position="bottom-left" />
+
       <div className="rounded-lg dark:shadow-dark-md shadow-md bg-white dark:bg-darkgray p-6 relative w-full break-words">
-        <h5 className="card-title">Edit Album</h5>
+        <div className="flex justify-between items-center">
+          <h2 className="card-title">Album Images</h2>
+          <div />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {
+            albumData?.images != null && albumData.images.length ?
+              albumData.images.map((item, index) => (
+                <div style={{ position: 'relative', display: 'inline-block', width: '20%' }}>
+                  <img src={`${static_url}${item}`} alt={albumData.uuid} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
+                  <button
+                    onClick={() => {
+                      setOpenDeleteModal(item)
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '5px',
+                      right: '5px',
+                      backgroundColor: 'red',
+                      border: 'none',
+                      borderRadius: '50%',
+                      color: 'white',
+                      width: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <MdDelete className="h-3 w-3" />
+                  </button>
+                </div>
+              ))
+              : <h4>Empty images</h4>
+          }
+
+        </div>
+        <div className="col-span-12 flex gap-3 justify-end mt-8">
+          <Button color="primary" onClick={goToAddAlbumImages}><MdOutlineAddAPhoto className="h-5 w-5" />Add More</Button>
+        </div>
+      </div>
+      <Modal show={openDeleteModal != null} size="md" onClose={() => setOpenDeleteModal(null)} popup>
+        <Modal.Header />
+        <Modal.Body>
+          <div className="text-center">
+            <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+              Are you sure you want to delete this image?
+            </h3>
+            <div className="flex justify-center gap-4">
+              <Button color="failure" onClick={() => {
+                setOpenDeleteModal(null)
+                removeAlbumImages(openDeleteModal!);
+              }}>
+                {"Yes, I'm sure"}
+              </Button>
+              <Button color="gray" onClick={() => setOpenDeleteModal(null)}>
+                No, cancel
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+      </Modal>
+      <div className="mt-8" />
+      <div className="rounded-lg dark:shadow-dark-md shadow-md bg-white dark:bg-darkgray p-6 relative w-full break-words">
+        <div className="flex justify-between items-center">
+          <h2 className="card-title">Edit Album</h2>
+          <div />
+        </div>
         <div className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             <div className="lg:col-span-6 col-span-12">
@@ -282,10 +387,9 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="releasedAt" value="Released At" />
                   </div>
-                  <Datepicker id="releasedAt" className="z-50" defaultValue={releasedAt?.toDateString()} onChange={(e) => {
-                    if (e.target.valueAsDate != null) {
-
-                      setReleasedAt(e.target.valueAsDate)
+                  <Datepicker id="releasedAt" className="z-50" defaultValue={releasedAt} onChange={(e) => {
+                    if (e != null) {
+                      setReleasedAt(e)
                     }
                   }} />
                 </div>
@@ -293,11 +397,15 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="brokenAt" value="Broken At" />
                   </div>
-                  <Datepicker id="brokenAt" className="z-50" defaultValue={brokenAt?.toDateString()} onChange={(e) => {
-                    if (e.target.valueAsDate != null) {
-                      setBrokenAt(e.target.valueAsDate)
-                    }
-                  }} />
+                  <Datepicker
+                    id="brokenAt"
+                    className="z-50"
+                    placeholder="Please select a date"
+                    defaultValue={brokenAt == null ? undefined : brokenAt}
+                    onChange={(e) => {
+                      setBrokenAt(e)
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -309,4 +417,4 @@ export default function Page({ params }: {
       </div>
     </>
   );
-};
+}
