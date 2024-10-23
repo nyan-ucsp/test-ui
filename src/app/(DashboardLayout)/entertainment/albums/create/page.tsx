@@ -26,7 +26,7 @@ const Page = () => {
   type AlbumFormData = {
     title: string;
     description: string;
-    release_at: Date;
+    released_at: Date;
     tags: string;
     enable: boolean;
     completed: boolean;
@@ -44,7 +44,7 @@ const Page = () => {
         const albumData: AlbumFormData = {
           title: title,
           description: description,
-          release_at: releasedAt, // Or new Date().toISOString() if you prefer using Date objects
+          released_at: releasedAt, // Or new Date().toISOString() if you prefer using Date objects
           tags: tags,
           enable: enable,
           completed: complete,
@@ -67,10 +67,11 @@ const Page = () => {
           toast.success("Successfully Created");
           router.replace('/entertainment/albums');
         } else {
-          toast.error("Something was wrong");
+          toast.error("Something was wrong 1");
         }
       } catch (error) {
-        toast.error("Something was wrong");
+        console.log(error);
+        toast.error("Something was wrong 2");
       } finally {
         setLoading(false);
       }
@@ -185,10 +186,8 @@ const Page = () => {
                     value={minAge}
                     onChange={(event) => {
                       var a = event.target.value;
-                      console.log(a);
                       try {
                         var age = parseInt(a, 10);
-                        console.log(age);
                         if (age >= 0) {
                           setMinAge(age)
                         } else {

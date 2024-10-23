@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { MdDelete, MdOutlineAddAPhoto } from "react-icons/md";
+import { setEnvironmentData } from "worker_threads";
 
 export default function Page({ params }: {
   params: {
@@ -21,11 +22,27 @@ export default function Page({ params }: {
   var apiKey = decrypt({ data: chiperText })
   const [error, setError] = useState<string | null>(null);
   const [selectedCover, setSelectedCover] = useState<File | null>(null);
-  const [releasedAt, setReleasedAt] = useState(new Date())
-  const [brokenAt, setBrokenAt] = useState<Date | null>(null)
   const [initloading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [albumData, setAlbumData] = useState<AlbumData | null>(null);
+  const [albumEditData, setAlbumEditData] = useState<AlbumEditFormData | null>(null);
+
+  function setEditData(result: any) {
+    if (result != null) {
+      var reqData: AlbumEditFormData = {
+        title: result.title,
+        description: result.description,
+        released_at: new Date(result.released_at),
+        broken_at: result.broken_at != null ? new Date(result.broken_at) : null,
+        tags: result.tags,
+        enable: result.enable,
+        completed: result.completed,
+        min_age: result.min_age,
+        cover: null,
+      }
+      setAlbumEditData(reqData);
+    }
+  }
 
 
   useEffect(() => {
@@ -61,12 +78,12 @@ export default function Page({ params }: {
   type AlbumEditFormData = {
     title: string;
     description: string;
-    releasedAt: Date;
-    brokenAt: Date | null;
+    released_at: Date;
+    broken_at: Date | null;
     tags: string;
     enable: boolean;
     completed: boolean;
-    minAge: number;
+    min_age: number;
     cover: File | null;
   }
 
@@ -112,11 +129,7 @@ export default function Page({ params }: {
       });
       const result = await res.json();
       setAlbumData(result || null);
-      if (albumData != null) {
-        const parsedDate = new Date(albumData.released_at)
-        setReleasedAt(parsedDate)
-        setBrokenAt(brokenAt)
-      }
+      setEditData(result);
     } catch (error) {
       setError("Something was wrong");
     } finally {
@@ -127,47 +140,39 @@ export default function Page({ params }: {
   //!Edit Album
   const updateAlbum = async () => {
     setLoading(true)
-    try {
-      const reqData: AlbumEditFormData = {
-        title: albumData?.title ?? "",
-        description: albumData?.description ?? "",
-        releasedAt: releasedAt, // Or new Date().toISOString() if you prefer using Date objects
-        brokenAt: brokenAt,
-        tags: albumData?.tags ?? "",
-        enable: albumData?.enable ?? true,
-        completed: albumData?.completed ?? false,
-        minAge: albumData?.min_age ?? 0,
-        cover: selectedCover
-      };
-      var formData = toFormData<AlbumEditFormData>(reqData)
+    if (albumEditData != null) {
+      try {
+        var formData = toFormData<AlbumEditFormData>(albumEditData)
 
-      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.uuid);
+        var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.uuid);
 
-      const res = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'X-API-KEY': apiKey,
-        },
-        body: formData,
-      });
-      if (res.status == 200) {
-        toast.success("Successfully Created");
-        router.replace('/entertainment/albums');
-      } else {
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'X-API-KEY': apiKey,
+          },
+          body: formData,
+        });
+        if (res.status == 200) {
+          toast.success("Successfully Created");
+          router.replace('/entertainment/albums');
+        } else {
+          toast.error("Something was wrong");
+        }
+      } catch (error) {
         toast.error("Something was wrong");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      toast.error("Something was wrong");
-    } finally {
-      setLoading(false);
+    } else {
+      toast.error("Invalid reqest");
     }
   };
   if (initloading) return <Loading />
-  if (albumData == null || error != null) <SomethingWasWrong message={error!} onPressedText={"Reload"} onPressed={() => fetchAlbum()} />
+  if (albumData == null || albumEditData == null || error != null) <SomethingWasWrong message={error!} onPressedText={"Reload"} onPressed={() => fetchAlbum()} />
   return (
     <>
       <Toaster position="bottom-left" />
-
       <div className="rounded-lg dark:shadow-dark-md shadow-md bg-white dark:bg-darkgray p-6 relative w-full break-words">
         <div className="flex justify-between items-center">
           <h2 className="card-title">Album Images</h2>
@@ -269,11 +274,11 @@ export default function Page({ params }: {
                     placeholder="Title"
                     required
                     className="form-control"
-                    defaultValue={albumData?.title}
+                    defaultValue={albumEditData?.title}
                     onChange={(event) => {
-                      var data = albumData!;
+                      var data = albumEditData!;
                       data.title = event.target.value;
-                      setAlbumData(data)
+                      setAlbumEditData(data)
                     }}
                   />
                 </div>
@@ -287,11 +292,11 @@ export default function Page({ params }: {
                     placeholder="Description"
                     required
                     className="form-control"
-                    defaultValue={albumData?.description}
+                    defaultValue={albumEditData?.description}
                     onChange={(event) => {
-                      var data = albumData!;
+                      var data = albumEditData!;
                       data.description = event.target.value;
-                      setAlbumData(data)
+                      setAlbumEditData(data)
                     }}
                   />
                 </div>
@@ -304,11 +309,11 @@ export default function Page({ params }: {
                     type="text"
                     placeholder="#action"
                     className="form-control"
-                    defaultValue={albumData?.tags}
+                    defaultValue={albumEditData?.tags}
                     onChange={(event) => {
-                      var data = albumData!;
+                      var data = albumEditData!;
                       data.tags = event.target.value;
-                      setAlbumData(data)
+                      setAlbumEditData(data)
                     }}
                   />
                 </div>
@@ -326,23 +331,23 @@ export default function Page({ params }: {
                     placeholder="Minimum Age"
                     required
                     className="form-control"
-                    defaultValue={albumData?.min_age}
-                    value={albumData?.min_age}
+                    defaultValue={albumEditData?.min_age}
+                    value={albumEditData?.min_age}
                     onChange={(event) => {
-                      var data = albumData!;
+                      var data = albumEditData!;
                       var a = event.target.value;
                       try {
                         var age = parseInt(a, 10)
                         if (age >= 0) {
                           data.min_age = age;
-                          setAlbumData(data)
+                          setAlbumEditData(data)
                         } else {
                           data.min_age = 0;
-                          setAlbumData(data)
+                          setAlbumEditData(data)
                         }
                       } catch (error) {
                         data.min_age = 0;
-                        setAlbumData(data)
+                        setAlbumEditData(data)
                       }
                     }}
                   />
@@ -351,14 +356,14 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="visibility" value="Visibility" />
                   </div>
-                  <Select id="visibility" required className="select-rounded" onChange={(e) => {
-                    var data = albumData!;
+                  <Select value={(albumEditData?.enable ?? true) ? "enable" : "disable"} id="visibility" required className="select-rounded" onChange={(e) => {
+                    var data = albumEditData!;
                     if (e.target.value === "disable") {
                       data.enable = false;
-                      setAlbumData(data);
+                      setAlbumEditData(data);
                     } else {
                       data.enable = true;
-                      setAlbumData(data);
+                      setAlbumEditData(data);
                     }
                   }}>
                     <option value="enable">Enable</option>
@@ -369,14 +374,14 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="type" value="Type" />
                   </div>
-                  <Select id="type" required className="select-rounded" onChange={(e) => {
-                    var data = albumData!;
+                  <Select id="type" value={(albumEditData?.completed ?? true) ? "completed" : "ongoing"} required className="select-rounded" onChange={(e) => {
+                    var data = albumEditData!;
                     if (e.target.value === "ongoing") {
                       data.completed = false;
-                      setAlbumData(data);
+                      setAlbumEditData(data);
                     } else {
                       data.completed = true;
-                      setAlbumData(data);
+                      setAlbumEditData(data);
                     }
                   }}>
                     <option value="ongoing">Ongoing</option>
@@ -387,9 +392,11 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="releasedAt" value="Released At" />
                   </div>
-                  <Datepicker id="releasedAt" className="z-50" defaultValue={releasedAt} onChange={(e) => {
-                    if (e != null) {
-                      setReleasedAt(e)
+                  <Datepicker id="releasedAt" className="z-50" value={albumEditData?.released_at} onChange={(e) => {
+                    if (e != null && albumEditData != null) {
+                      var data = albumEditData;
+                      data.released_at = e;
+                      setAlbumEditData(data);
                     }
                   }} />
                 </div>
@@ -400,10 +407,15 @@ export default function Page({ params }: {
                   <Datepicker
                     id="brokenAt"
                     className="z-50"
+                    value={albumEditData?.broken_at}
+                    unselectable="on"
                     placeholder="Please select a date"
-                    defaultValue={brokenAt == null ? undefined : brokenAt}
                     onChange={(e) => {
-                      setBrokenAt(e)
+                      if (e != null && albumEditData != null) {
+                        var data = albumEditData;
+                        data.broken_at = e;
+                        setAlbumEditData(data);
+                      }
                     }}
                   />
                 </div>
