@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { MdDelete, MdOutlineAddAPhoto } from "react-icons/md";
-import { setEnvironmentData } from "worker_threads";
 
 export default function Page({ params }: {
   params: {
@@ -25,6 +24,7 @@ export default function Page({ params }: {
   const [initloading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [albumData, setAlbumData] = useState<AlbumData | null>(null);
+  const [selectedAge, setSelectedAge] = useState<number | undefined>(undefined);
   const [albumEditData, setAlbumEditData] = useState<AlbumEditFormData | null>(null);
 
   function setEditData(result: any) {
@@ -104,8 +104,8 @@ export default function Page({ params }: {
         body: JSON.stringify({ "images": [img_src] }),
       });
       if (res.status == 200) {
-        toast.success("Successfully Deleted");
         fetchAlbum();
+        toast.success("Successfully Deleted");
       }
     } catch (error) {
       toast.error("Failed to delete image");
@@ -116,7 +116,6 @@ export default function Page({ params }: {
 
   //!Fetch Album
   const fetchAlbum = async () => {
-    setInitLoading(true)
     setError(null)
     try {
       var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/albums/").concat(params.uuid);
@@ -129,6 +128,7 @@ export default function Page({ params }: {
       });
       const result = await res.json();
       setAlbumData(result || null);
+      setSelectedAge(result.min_age);
       setEditData(result);
     } catch (error) {
       setError("Something was wrong");
@@ -331,23 +331,33 @@ export default function Page({ params }: {
                     placeholder="Minimum Age"
                     required
                     className="form-control"
-                    defaultValue={albumEditData?.min_age}
-                    value={albumEditData?.min_age}
+                    defaultValue={selectedAge}
+                    value={selectedAge}
                     onChange={(event) => {
-                      var data = albumEditData!;
-                      var a = event.target.value;
-                      try {
-                        var age = parseInt(a, 10)
-                        if (age >= 0) {
-                          data.min_age = age;
-                          setAlbumEditData(data)
-                        } else {
-                          data.min_age = 0;
-                          setAlbumEditData(data)
+                      if (albumEditData != null) {
+                        var a = event.target.value;
+                        try {
+                          var age = parseInt(a, 10);
+                          if (age >= 0) {
+                            setSelectedAge(age);
+                            setAlbumEditData({
+                              ...albumEditData,
+                              min_age: age,
+                            })
+                          } else {
+                            setSelectedAge(0);
+                            setAlbumEditData({
+                              ...albumEditData,
+                              min_age: 0,
+                            })
+                          }
+                        } catch (error) {
+                          setSelectedAge(undefined);
+                          setAlbumEditData({
+                            ...albumEditData,
+                            min_age: 0,
+                          })
                         }
-                      } catch (error) {
-                        data.min_age = 0;
-                        setAlbumEditData(data)
                       }
                     }}
                   />
@@ -356,16 +366,26 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="visibility" value="Visibility" />
                   </div>
-                  <Select value={(albumEditData?.enable ?? true) ? "enable" : "disable"} id="visibility" required className="select-rounded" onChange={(e) => {
-                    var data = albumEditData!;
-                    if (e.target.value === "disable") {
-                      data.enable = false;
-                      setAlbumEditData(data);
-                    } else {
-                      data.enable = true;
-                      setAlbumEditData(data);
-                    }
-                  }}>
+                  <Select
+                    value={(albumEditData?.enable ?? true) ? "enable" : "disable"} id="visibility"
+                    required
+                    className="select-rounded"
+                    onChange={(e) => {
+                      if (albumEditData != null) {
+                        if (e.target.value === "disable") {
+                          setAlbumEditData({
+                            ...albumEditData,
+                            enable: false,
+                          })
+                        } else {
+                          setAlbumEditData({
+                            ...albumEditData,
+                            enable: true,
+                          })
+                        }
+                      }
+
+                    }}>
                     <option value="enable">Enable</option>
                     <option value="disable">Disable</option>
                   </Select>
@@ -374,16 +394,25 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="type" value="Type" />
                   </div>
-                  <Select id="type" value={(albumEditData?.completed ?? true) ? "completed" : "ongoing"} required className="select-rounded" onChange={(e) => {
-                    var data = albumEditData!;
-                    if (e.target.value === "ongoing") {
-                      data.completed = false;
-                      setAlbumEditData(data);
-                    } else {
-                      data.completed = true;
-                      setAlbumEditData(data);
-                    }
-                  }}>
+                  <Select id="type"
+                    value={(albumEditData?.completed ?? true) ? "completed" : "ongoing"}
+                    required
+                    className="select-rounded"
+                    onChange={(e) => {
+                      if (albumEditData != null) {
+                        if (e.target.value === "ongoing") {
+                          setAlbumEditData({
+                            ...albumEditData,
+                            completed: false,
+                          })
+                        } else {
+                          setAlbumEditData({
+                            ...albumEditData,
+                            completed: true,
+                          })
+                        }
+                      }
+                    }}>
                     <option value="ongoing">Ongoing</option>
                     <option value="completed">Completed</option>
                   </Select>
@@ -392,13 +421,17 @@ export default function Page({ params }: {
                   <div className="mb-2 block">
                     <Label htmlFor="releasedAt" value="Released At" />
                   </div>
-                  <Datepicker id="releasedAt" className="z-50" value={albumEditData?.released_at} onChange={(e) => {
-                    if (e != null && albumEditData != null) {
-                      var data = albumEditData;
-                      data.released_at = e;
-                      setAlbumEditData(data);
-                    }
-                  }} />
+                  <Datepicker id="releasedAt"
+                    className="z-50"
+                    value={albumEditData?.released_at}
+                    onChange={(e) => {
+                      if (e != null && albumEditData != null) {
+                        setAlbumEditData({
+                          ...albumEditData,
+                          released_at: e,
+                        })
+                      }
+                    }} />
                 </div>
                 <div>
                   <div className="mb-2 block">
@@ -406,15 +439,16 @@ export default function Page({ params }: {
                   </div>
                   <Datepicker
                     id="brokenAt"
-                    className="z-50"
+                    key={albumEditData?.broken_at == null ? "with-value" : "no-value"}
                     value={albumEditData?.broken_at}
                     unselectable="on"
                     placeholder="Please select a date"
                     onChange={(e) => {
-                      if (e != null && albumEditData != null) {
-                        var data = albumEditData;
-                        data.broken_at = e;
-                        setAlbumEditData(data);
+                      if (albumEditData != null) {
+                        setAlbumEditData({
+                          ...albumEditData,
+                          broken_at: e,
+                        })
                       }
                     }}
                   />

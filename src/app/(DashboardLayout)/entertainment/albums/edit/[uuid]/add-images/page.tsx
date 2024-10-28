@@ -15,7 +15,6 @@ export default function Page({ params }: {
   var static_url = (process.env.NEXT_PUBLIC_STATIC_API_URL ?? "");
   var chiperText = localStorage.getItem('api-key') ?? "";
   var apiKey = decrypt({ data: chiperText })
-  const [error, setError] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<FileList | null>(null);
   const [loading, setLoading] = useState(false);
   type AddAlbumImagesFormData = {
@@ -42,7 +41,7 @@ export default function Page({ params }: {
       });
       if (res.status == 201) {
         toast.success("Successfully Added");
-        router.replace('/entertainment/albums');
+        setTimeout(() => router.replace('/entertainment/albums'), 500);
       } else {
         toast.error("Something was wrong");
       }
