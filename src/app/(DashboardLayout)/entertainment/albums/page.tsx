@@ -59,6 +59,7 @@ const Albums = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [filterData, setFilterData] = useState<FilterData>({
@@ -81,6 +82,14 @@ const Albums = () => {
 
     return () => clearTimeout(timer);
   }, [deleteSuccess]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDeleteError(null);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [deleteError]);
 
   const [openFilterModal, setOpenFilterModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState<string | null>(null);
@@ -109,6 +118,7 @@ const Albums = () => {
   const fetchAlbums = async () => {
     setLoading(true)
     setError(null)
+    setDeleteError(null)
     try {
       var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/albums");
       const res = await fetch(url, {
@@ -138,11 +148,12 @@ const Albums = () => {
           'Content-Type': 'application/json',
           'X-API-KEY': apiKey,
         },
-        body: JSON.stringify(filterData),
       });
       if (res.status == 204) {
         setDeleteSuccess("Successfully Deleted");
         fetchAlbums();
+      } else {
+        setDeleteError("Failed to delete album");
       }
     } catch (error) {
       setError("Something was wrong");
@@ -167,12 +178,12 @@ const Albums = () => {
     setCurrentPage(page);
   };
 
+  function goToAlbumDetails(album_id: number) {
+    router.push(`/entertainment/albums/details/${album_id}`);
+  }
+
   /*Table Action*/
   const tableActionData = [
-    {
-      icon: "solar:document-text-outline",
-      listtitle: "Detail",
-    },
     {
       icon: "solar:pen-new-square-broken",
       listtitle: "Edit",
@@ -335,7 +346,7 @@ const Albums = () => {
                 {responseData != null && Array.isArray(responseData.data) && responseData.data.length > 0 ?
                   responseData.data.map((item, index) => (
                     <Table.Row key={index}>
-                      <Table.Cell className="whitespace-nowrap ps-6">
+                      <Table.Cell className="whitespace-nowrap ps-6" onClick={() => goToAlbumDetails(item.id)}>
                         <div className="flex gap-3 items-center">
                           <Image
                             src={static_url.concat(item.url)}
@@ -373,10 +384,10 @@ const Albums = () => {
                         >
                           {tableActionData.map((items, index) => (
                             <Dropdown.Item key={index} className="flex gap-3" onClick={() => {
-                              if (index == 1) {
+                              if (index == 0) {
                                 router.push(`/entertainment/albums/edit/${item.uuid}`);
                               }
-                              if (index == 2) {
+                              if (index == 1) {
                                 setOpenDeleteModal(item.uuid);
                               }
                             }}>
@@ -461,6 +472,28 @@ const Albums = () => {
               <span className="font-medium" style={{ display: 'flex', alignItems: 'center' }}>
                 <Icon icon="solar:info-circle-linear" height={16} />
                 <span className="ml-2">{deleteSuccess}</span>
+              </span>
+            </div>}
+          {deleteError &&
+            <div
+              style={{
+                position: 'fixed',
+                bottom: '20px',
+                left: '20px',
+                backgroundColor: '#f8d7da',
+                color: '#721c24',
+                border: '1px solid #f5c6cb',
+                borderRadius: '4px',
+                padding: '10px 15px',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                zIndex: 1000,
+              }}
+            >
+              <span className="font-medium" style={{ display: 'flex', alignItems: 'center' }}>
+                <Icon icon="solar:info-circle-linear" height={16} />
+                <span className="ml-2">{deleteError}</span>
               </span>
             </div>}
         </div>

@@ -12,4 +12,14 @@ const toUTCDateString = function (date: Date): string {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliSeconds}Z`;
 };
 
-export { toUTCDateString }
+const formatToLocalDateTime = function (created_at: string | null): string | null {
+    if (!created_at) return null;
+
+    // Convert to Date object
+    const date = new Date(created_at);
+
+    // Format to local date-time string
+    return date.toLocaleString();
+}
+
+export { toUTCDateString, formatToLocalDateTime }
