@@ -204,7 +204,7 @@ const Albums = () => {
           <Button color="primary" href="/entertainment/albums/create" as={Link}><MdOutlineCreateNewFolder className="h-5 w-5" />Create</Button>
         </div>
         <div className="mt-3">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto pt-8">
             <Table hoverable>
               <Table.Head>
                 <Table.HeadCell className="p-6">Album</Table.HeadCell>
@@ -342,7 +342,7 @@ const Albums = () => {
                 </Table.HeadCell>
               </Table.Head>
 
-              <Table.Body className="divide-y divide-border dark:divide-darkborder ">
+              <Table.Body className="divide-y divide-border dark:divide-darkborder">
                 {responseData != null && Array.isArray(responseData.data) && responseData.data.length > 0 ?
                   responseData.data.map((item, index) => (
                     <Table.Row key={index}>
@@ -375,6 +375,7 @@ const Albums = () => {
                       <Table.Cell>
                         <Dropdown
                           label=""
+                          className="z-60"
                           dismissOnClick={false}
                           renderTrigger={() => (
                             <span className="h-9 w-9 flex justify-center items-center rounded-full hover:bg-lightprimary hover:text-primary cursor-pointer">
@@ -383,6 +384,7 @@ const Albums = () => {
                           )}
                         >
                           {tableActionData.map((items, index) => (
+<<<<<<< HEAD
                             <Dropdown.Item key={index} className="flex gap-3" onClick={() => {
                               if (index == 0) {
                                 router.push(`/entertainment/albums/edit/${item.uuid}`);
@@ -391,6 +393,21 @@ const Albums = () => {
                                 setOpenDeleteModal(item.uuid);
                               }
                             }}>
+=======
+                            <Dropdown.Item key={index}
+                              className="flex gap-3 p-2 relative"
+                              onClick={() => {
+                                if (index == 0) {
+                                  router.push(`/entertainment/albums/details/${item.uuid}`);
+                                }
+                                if (index == 1) {
+                                  router.push(`/entertainment/albums/edit/${item.uuid}`);
+                                }
+                                if (index == 2) {
+                                  setOpenDeleteModal(item.uuid);
+                                }
+                              }}>
+>>>>>>> 0827288527fde866665bfa60e483d93f24f2c016
                               {" "}
                               <Icon icon={`${items.icon}`} height={18} />
                               <span>{items.listtitle}</span>

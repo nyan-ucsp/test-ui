@@ -345,7 +345,7 @@ export default function Page({ params }: {
                               min_age: age,
                             })
                           } else {
-                            setSelectedAge(0);
+                            setSelectedAge(undefined);
                             setAlbumEditData({
                               ...albumEditData,
                               min_age: 0,
