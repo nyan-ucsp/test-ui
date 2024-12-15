@@ -384,7 +384,6 @@ const Albums = () => {
                           )}
                         >
                           {tableActionData.map((items, index) => (
-<<<<<<< HEAD
                             <Dropdown.Item key={index} className="flex gap-3" onClick={() => {
                               if (index == 0) {
                                 router.push(`/entertainment/albums/edit/${item.uuid}`);
@@ -393,21 +392,6 @@ const Albums = () => {
                                 setOpenDeleteModal(item.uuid);
                               }
                             }}>
-=======
-                            <Dropdown.Item key={index}
-                              className="flex gap-3 p-2 relative"
-                              onClick={() => {
-                                if (index == 0) {
-                                  router.push(`/entertainment/albums/details/${item.uuid}`);
-                                }
-                                if (index == 1) {
-                                  router.push(`/entertainment/albums/edit/${item.uuid}`);
-                                }
-                                if (index == 2) {
-                                  setOpenDeleteModal(item.uuid);
-                                }
-                              }}>
->>>>>>> 0827288527fde866665bfa60e483d93f24f2c016
                               {" "}
                               <Icon icon={`${items.icon}`} height={18} />
                               <span>{items.listtitle}</span>
