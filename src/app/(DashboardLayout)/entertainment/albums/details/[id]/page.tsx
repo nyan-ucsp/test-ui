@@ -1,6 +1,7 @@
 "use client";;
 import Loading from "@/app/(DashboardLayout)/layout/shared/loading/Loading";
 import SomethingWasWrong from "@/app/(DashboardLayout)/layout/shared/reload/something_was_wrong";
+import { bytesToHumanReadable } from "@/utils/converter/converter";
 import { formatToLocalDateTime } from "@/utils/date_helper/datehelper";
 import { decrypt } from "@/utils/encryption/encryption";
 import { Icon } from "@iconify/react/dist/iconify.js";
@@ -9,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
+import { FaFileArrowDown, FaLink } from "react-icons/fa6";
 import { HiOutlineDotsVertical, HiOutlineExclamationCircle } from "react-icons/hi";
 import { MdOutlineCreateNewFolder } from "react-icons/md";
 
@@ -61,6 +63,7 @@ export default function Page({ params }: {
     width: number;
     title: string;
     updated_at: string | null;
+    file_url: string | null;
     url: string | null;
     uuid: string;
   }
@@ -119,6 +122,27 @@ export default function Page({ params }: {
       setLoading(false);
     }
   };
+
+  function handleFileClick(episode: EpisodeData) {
+    if (episode.url != null && episode.content_type != null) {
+      var file_url = static_url.concat(episode.url!);
+      if (episode.content_type === 'image/jpeg' || episode.content_type === 'image/png') {
+        window.open(file_url, '_blank');
+      } else if (episode.content_type === 'application/pdf') {
+        window.open(file_url, '_blank');
+      } else {
+        const a = document.createElement('a');
+        a.href = file_url;
+        a.download = 'file.download'; // You can customize the download filename
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } else if (episode.file_url != null) {
+      window.open(episode.file_url, '_blank');
+    }
+
+  }
 
   /*Table Action*/
   const tableActionData = [
@@ -233,7 +257,7 @@ export default function Page({ params }: {
                       {tableActionData.map((items, index) => (
                         <Dropdown.Item key={index} className="flex gap-3" onClick={() => {
                           if (index == 0) {
-                            router.push(`/entertainment/albums/${params.id}/episodes/${episode.uuid}`);
+                            router.push(`/entertainment/albums/${params.id}/edit_episode/${episode.uuid}`);
                           }
                           if (index == 1) {
                             setOpenDeleteModal(episode.uuid);
@@ -247,7 +271,19 @@ export default function Page({ params }: {
                       ))}
                     </Dropdown></div>
                 </div>
-                {episode.content_type ? <p className="mt-2">{episode.content_type}</p> : <div />}
+                {episode.content_type ?
+                  <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
+                    <FaFileArrowDown size={24} />
+                    <div className="w-2" />
+                    <div > <p >{episode.content_type}</p> <p>{bytesToHumanReadable(episode.bytes)}</p> </div>
+                  </div>
+                  : episode.file_url ?
+                    <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
+                      <FaLink size={24} />
+                      <div className="w-2" />
+                      <p >{episode.file_url}</p>
+                    </div>
+                    : <div />}
               </div>
             ))
             : (

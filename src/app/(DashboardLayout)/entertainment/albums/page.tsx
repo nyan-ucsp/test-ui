@@ -346,7 +346,7 @@ const Albums = () => {
                 {responseData != null && Array.isArray(responseData.data) && responseData.data.length > 0 ?
                   responseData.data.map((item, index) => (
                     <Table.Row key={index}>
-                      <Table.Cell className="whitespace-nowrap ps-6" onClick={() => goToAlbumDetails(item.id)}>
+                      <Table.Cell className="whitespace-nowrap ps-6 cursor-pointer" onClick={() => goToAlbumDetails(item.id)}>
                         <div className="flex gap-3 items-center">
                           <Image
                             src={static_url.concat(item.url)}

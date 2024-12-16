@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
-import { MdDelete, MdOutlineAddAPhoto } from "react-icons/md";
+import { MdDelete, MdOutlineAddAPhoto, MdOutlineImage } from "react-icons/md";
 
 export default function Page({ params }: {
   params: {
@@ -208,7 +208,10 @@ export default function Page({ params }: {
                   </button>
                 </div>
               ))
-              : <h4>Empty images</h4>
+              : <div className="w-full flex flex-col items-center justify-center mt-4">
+                <MdOutlineImage size={32} />
+                <p className="font-semibold">Empty images</p>
+              </div>
           }
 
         </div>
