@@ -1,4 +1,6 @@
 "use client";;
+import Loading from "@/app/(DashboardLayout)/layout/shared/loading/Loading";
+import SomethingWasWrong from "@/app/(DashboardLayout)/layout/shared/reload/something_was_wrong";
 import { decrypt } from "@/utils/encryption/encryption";
 import { toFormData } from "@/utils/formdata/toformdata";
 import { Button, FileInput, Label, Radio, TextInput } from "flowbite-react";
@@ -18,15 +20,31 @@ export default function Page({ params }: {
   var apiKey = decrypt({ data: chiperText })
   const [error, setError] = useState<string | null>(null);
   const [initloading, setInitLoading] = useState(true);
-  const [episodeName, setEpsiodeName] = useState<string>("");
-  const [selectedType, setSelectedType] = useState<string>("None"); // Default value matches the `defaultChecked` radio
-  const [fileURL, setFileURL] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [editEpisodeFormData, setEditEpisodeFormData] = useState<EditEpisodeFormData | null>(null);
+  const [selectedType, setSelectedType] = useState<string>("None");
   const [loading, setLoading] = useState(false);
+
+  function setEditData(result: any) {
+    if (result != null) {
+      var reqData: EditEpisodeFormData = {
+        title: result.title,
+        file: null,
+        file_url: result.file_url
+      }
+      if (reqData.file_url != null && reqData.file_url.trim() != "") {
+        setSelectedType("URL");
+      } else if (result.content_type != null && result.content_type.trim() != "") {
+        setSelectedType("File");
+      } else {
+        setSelectedType("None");
+      }
+      setEditEpisodeFormData(reqData);
+    }
+  }
 
   type EditEpisodeFormData = {
     file: File | null;
-    file_url: string | null;
+    file_url: string | undefined;
     title: string;
   }
 
@@ -35,44 +53,41 @@ export default function Page({ params }: {
   };
 
   useEffect(() => {
-    // fetchEpisode();
+    fetchEpisode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   // //!Fetch Album
-  // const fetchEpisode = async () => {
-  //   setError(null)
-  //   try {
-  //     var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/albums/").concat(params.uuid);
-  //     const res = await fetch(url, {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'X-API-KEY': apiKey,
-  //       },
-  //     });
-  //     const result = await res.json();
-  //     setAlbumData(result || null);
-  //     setSelectedAge(result.min_age);
-  //     setEditData(result);
-  //   } catch (error) {
-  //     setError("Something was wrong");
-  //   } finally {
-  //     setInitLoading(false);
-  //   }
-  // };
+  const fetchEpisode = async () => {
+    setError(null)
+    try {
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episode/").concat(params.uuid);
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': apiKey,
+        },
+      });
+      try {
+        const result = await res.json();
+        setEditData(result);
+      } catch (error) {
+        setError("Something was wrong")
+      }
+    } catch (error) {
+      setError("Something was wrong");
+    } finally {
+      setInitLoading(false);
+    }
+  };
 
   //!Edit Episode
-  const saveCLick = async (event: React.FormEvent) => {
+  const saveClick = async (event: React.FormEvent) => {
     event.preventDefault();
-    setLoading(true)
+    setInitLoading(true);
     try {
-      const reqData: EditEpisodeFormData = {
-        file: selectedFile,
-        file_url: fileURL,
-        title: episodeName,
-      };
-      var formData = toFormData<EditEpisodeFormData>(reqData)
+      var formData = toFormData<EditEpisodeFormData>(editEpisodeFormData!)
 
       var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episodes/").concat(params.uuid);
 
@@ -95,10 +110,12 @@ export default function Page({ params }: {
       setLoading(false);
     }
   };
+  if (initloading) return <Loading />
+  if (error != null || editEpisodeFormData == null) <SomethingWasWrong message={error!} onPressedText={"Reload"} onPressed={() => fetchEpisode()} />
   return (
     <>
       <Toaster position="bottom-left" />
-      <form onSubmit={saveCLick}>
+      <form onSubmit={saveClick}>
         <div className="rounded-lg dark:shadow-dark-md shadow-md bg-white dark:bg-darkgray p-6 relative w-full break-words">
           <h5 className="card-title">Edit Episode</h5>
           <div className="mt-6">
@@ -114,9 +131,11 @@ export default function Page({ params }: {
                         id="episode-name"
                         required
                         placeholder="Episode Name"
-                        defaultValue={episodeName}
+                        defaultValue={editEpisodeFormData?.title}
                         onChange={(event) => {
-                          setEpsiodeName(event.target.value)
+                          var data = editEpisodeFormData!;
+                          data.title = event.target.value;
+                          setEditEpisodeFormData(data)
                         }}
                       />
                     </div>
@@ -124,31 +143,33 @@ export default function Page({ params }: {
                   <fieldset className="flex max-w-md flex-row gap-4">
                     <legend className="mb-4">Choose your episode type</legend>
                     <div className="flex items-center gap-2">
-                      <Radio id="none" name="episode-type" value="None" defaultChecked onChange={handleTypeChange} />
+                      <Radio id="none" name="episode-type" value="None" checked={selectedType === 'None'} onChange={handleTypeChange} />
                       <Label htmlFor="none">None</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Radio id="file" name="episode-type" value="File" onChange={handleTypeChange} />
+                      <Radio id="file" name="episode-type" value="File" checked={selectedType === 'File'} onChange={handleTypeChange} />
                       <Label htmlFor="file">File</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Radio id="url" name="episode-type" value="URL" onChange={handleTypeChange} />
+                      <Radio id="url" name="episode-type" value="URL" checked={selectedType === 'URL'} onChange={handleTypeChange} />
                       <Label htmlFor="url">Recirect URL</Label>
                     </div>
                   </fieldset>
                   {selectedType == "File" ?
                     <div>
                       <div className="mb-2 block">
-                        <Label htmlFor="episode-file" value="File" />
+                        <Label htmlFor="episode-file" value="New File" />
                       </div>
                       <FileInput
                         id="episode-file"
                         required
-                        defaultValue={selectedFile?.name}
+                        defaultValue={editEpisodeFormData?.file?.name}
                         onChange={(e) => {
                           if (e.target.files != null) {
                             var file = e.target.files[0];
-                            setSelectedFile(file);
+                            var data = editEpisodeFormData!;
+                            data.file = file;
+                            setEditEpisodeFormData(data)
                           }
                         }}
                       />
@@ -163,9 +184,11 @@ export default function Page({ params }: {
                             id="episode-url"
                             required
                             placeholder="Episode File URL"
-                            defaultValue={fileURL}
+                            defaultValue={editEpisodeFormData?.file_url}
                             onChange={(event) => {
-                              setFileURL(event.target.value)
+                              var data = editEpisodeFormData!;
+                              data.file_url = event.target.value;
+                              setEditEpisodeFormData(data)
                             }}
                           />
                         </div>

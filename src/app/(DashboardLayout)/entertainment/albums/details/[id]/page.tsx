@@ -271,13 +271,13 @@ export default function Page({ params }: {
                       ))}
                     </Dropdown></div>
                 </div>
-                {episode.content_type ?
+                {(episode.content_type || episode.content_type?.trim() != "") ?
                   <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
                     <FaFileArrowDown size={24} />
                     <div className="w-2" />
                     <div > <p >{episode.content_type}</p> <p>{bytesToHumanReadable(episode.bytes)}</p> </div>
                   </div>
-                  : episode.file_url ?
+                  : (episode.file_url || episode.file_url?.trim() != "") ?
                     <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
                       <FaLink size={24} />
                       <div className="w-2" />
