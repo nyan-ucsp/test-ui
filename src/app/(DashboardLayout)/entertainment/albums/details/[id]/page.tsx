@@ -124,7 +124,7 @@ export default function Page({ params }: {
   };
 
   function handleFileClick(episode: EpisodeData) {
-    if (episode.url != null && episode.content_type != null) {
+    if (episode.url != null && episode.content_type != null && episode.content_type.trim() != "") {
       var file_url = static_url.concat(episode.url!);
       if (episode.content_type === 'image/jpeg' || episode.content_type === 'image/png') {
         window.open(file_url, '_blank');
@@ -138,7 +138,7 @@ export default function Page({ params }: {
         a.click();
         document.body.removeChild(a);
       }
-    } else if (episode.file_url != null) {
+    } else if (episode.file_url != null && episode.file_url.trim() != "") {
       window.open(episode.file_url, '_blank');
     }
 
@@ -271,13 +271,13 @@ export default function Page({ params }: {
                       ))}
                     </Dropdown></div>
                 </div>
-                {(episode.content_type || episode.content_type?.trim() != "") ?
+                {(episode.content_type != null && episode.content_type?.trim() != "") ?
                   <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
                     <FaFileArrowDown size={24} />
                     <div className="w-2" />
                     <div > <p >{episode.content_type}</p> <p>{bytesToHumanReadable(episode.bytes)}</p> </div>
                   </div>
-                  : (episode.file_url || episode.file_url?.trim() != "") ?
+                  : (episode.file_url != null && episode.file_url?.trim() != "") ?
                     <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
                       <FaLink size={24} />
                       <div className="w-2" />

@@ -29,7 +29,8 @@ export default function Page({ params }: {
       var reqData: EditEpisodeFormData = {
         title: result.title,
         file: null,
-        file_url: result.file_url
+        file_url: result.file_url,
+        remove_old_file: false,
       }
       if (reqData.file_url != null && reqData.file_url.trim() != "") {
         setSelectedType("URL");
@@ -46,6 +47,7 @@ export default function Page({ params }: {
     file: File | null;
     file_url: string | undefined;
     title: string;
+    remove_old_file: boolean;
   }
 
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +89,13 @@ export default function Page({ params }: {
     event.preventDefault();
     setInitLoading(true);
     try {
-      var formData = toFormData<EditEpisodeFormData>(editEpisodeFormData!)
+      var data: EditEpisodeFormData = {
+        file: selectedType == "File" ? editEpisodeFormData!.file : null,
+        file_url: selectedType == "URL" ? editEpisodeFormData?.file_url : "",
+        title: editEpisodeFormData?.title!,
+        remove_old_file: selectedType == "None"
+      }
+      var formData = toFormData<EditEpisodeFormData>(data)
 
       var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episodes/").concat(params.uuid);
 
