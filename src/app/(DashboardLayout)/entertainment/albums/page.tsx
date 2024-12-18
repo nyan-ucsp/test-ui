@@ -179,7 +179,7 @@ const Albums = () => {
   };
 
   function goToAlbumDetails(album_id: number) {
-    router.push(`/entertainment/albums/details/${album_id}`);
+    router.push(`/entertainment/albums/${album_id}`);
   }
 
   /*Table Action*/

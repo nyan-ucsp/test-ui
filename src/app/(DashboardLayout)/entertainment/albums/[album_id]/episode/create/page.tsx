@@ -8,7 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function Page({ params }: {
   params: {
-    id: number;
+    album_id: number;
   }
 }) {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function Page({ params }: {
     setLoading(true)
     try {
       const reqData: CreateEpisodeFormData = {
-        album_id: params.id,
+        album_id: params.album_id,
         file: selectedFile,
         file_url: fileURL,
         title: episodeName,
@@ -55,7 +55,7 @@ export default function Page({ params }: {
       });
       if (res.status == 201) {
         toast.success("Successfully Added");
-        setTimeout(() => router.replace(`/entertainment/albums/details/${params.id}`), 500);
+        setTimeout(() => router.replace(`/entertainment/albums/${params.album_id}`), 500);
       } else {
         toast.error("Something was wrong");
       }

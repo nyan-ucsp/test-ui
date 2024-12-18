@@ -12,7 +12,7 @@ import { MdDelete, MdOutlineAddAPhoto, MdOutlineImage } from "react-icons/md";
 
 export default function Page({ params }: {
   params: {
-    uuid: string;
+    album_uuid: string;
   }
 }) {
   const router = useRouter();
@@ -51,7 +51,7 @@ export default function Page({ params }: {
   }, [router]);
 
   function goToAddAlbumImages() {
-    router.push(`/entertainment/albums/edit/${params.uuid}/add-images`);
+    router.push(`/entertainment/albums/edit/${params.album_uuid}/add-images`);
   }
 
   type AlbumData = {
@@ -94,7 +94,7 @@ export default function Page({ params }: {
     setError(null)
     setLoading(true)
     try {
-      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.uuid).concat("/remove-images");
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.album_uuid).concat("/remove-images");
       const res = await fetch(url, {
         method: 'PUT',
         headers: {
@@ -118,7 +118,7 @@ export default function Page({ params }: {
   const fetchAlbum = async () => {
     setError(null)
     try {
-      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/albums/").concat(params.uuid);
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/albums/").concat(params.album_uuid);
       const res = await fetch(url, {
         method: 'GET',
         headers: {
@@ -144,7 +144,7 @@ export default function Page({ params }: {
       try {
         var formData = toFormData<AlbumEditFormData>(albumEditData)
 
-        var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.uuid);
+        var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.album_uuid);
 
         const res = await fetch(url, {
           method: 'PUT',

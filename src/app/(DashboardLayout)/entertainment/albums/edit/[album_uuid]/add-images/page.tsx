@@ -8,7 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function Page({ params }: {
   params: {
-    uuid: string;
+    album_uuid: string;
   }
 }) {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function Page({ params }: {
       };
       var formData = toFormData<AddAlbumImagesFormData>(reqData)
 
-      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.uuid).concat("/add-images");
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/album/").concat(params.album_uuid).concat("/add-images");
 
       const res = await fetch(url, {
         method: 'PUT',

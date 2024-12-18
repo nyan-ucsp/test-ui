@@ -10,8 +10,8 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function Page({ params }: {
   params: {
-    id: number;
-    uuid: string;
+    album_id: number;
+    episode_uuid: string;
   }
 }) {
   const router = useRouter();
@@ -63,7 +63,7 @@ export default function Page({ params }: {
   const fetchEpisode = async () => {
     setError(null)
     try {
-      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episode/").concat(params.uuid);
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episode/").concat(params.episode_uuid);
       const res = await fetch(url, {
         method: 'GET',
         headers: {
@@ -97,7 +97,7 @@ export default function Page({ params }: {
       }
       var formData = toFormData<EditEpisodeFormData>(data)
 
-      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episodes/").concat(params.uuid);
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episodes/").concat(params.episode_uuid);
 
       const res = await fetch(url, {
         method: 'PUT',
@@ -108,7 +108,7 @@ export default function Page({ params }: {
       });
       if (res.status == 200) {
         toast.success("Successfully Updated");
-        setTimeout(() => router.replace(`/entertainment/albums/details/${params.id}`), 500);
+        setTimeout(() => router.replace(`/entertainment/albums/${params.album_id}`), 500);
       } else {
         toast.error("Something was wrong");
       }

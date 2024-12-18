@@ -10,13 +10,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
-import { FaFileArrowDown, FaLink } from "react-icons/fa6";
+import { FaFile, FaLink } from "react-icons/fa6";
 import { HiOutlineDotsVertical, HiOutlineExclamationCircle } from "react-icons/hi";
 import { MdOutlineCreateNewFolder } from "react-icons/md";
 
 export default function Page({ params }: {
   params: {
-    id: number;
+    album_id: number;
   }
 }) {
   const router = useRouter();
@@ -29,6 +29,19 @@ export default function Page({ params }: {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [filterEpisodeTitle, setFilterEpisodeTitle] = useState<string>("");
   const [episodesData, setEpisodesData] = useState<EpisodesData | null>(null);
+
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth <= 768); // Adjust the breakpoint as needed
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
 
   useEffect(() => {
@@ -81,7 +94,7 @@ export default function Page({ params }: {
     setError(null)
     setDeleteError(null)
     try {
-      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episodes/").concat(params.id.toString());
+      var url = (process.env.NEXT_PUBLIC_API_URL ?? "").concat("/episodes/").concat(params.album_id.toString());
       const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -236,15 +249,15 @@ export default function Page({ params }: {
       <div className="rounded-lg dark:shadow-dark-md shadow-md bg-white dark:bg-darkgray p-6 relative w-full break-words">
         <div className="flex justify-between items-center">
           <h2 className="card-title">Episodes</h2>
-          <Button color="primary" href={`/entertainment/albums/${params.id}/create_episode`} as={Link}><MdOutlineCreateNewFolder className="h-5 w-5" />Create</Button>
+          <Button color="primary" href={`/entertainment/albums/${params.album_id}/episode/create`} as={Link}><MdOutlineCreateNewFolder className="h-5 w-5" />Create</Button>
         </div>
         <div className="mt-6">
           {episodesData != null && Array.isArray(episodesData.data) && episodesData.data.length > 0 ?
             episodesData.data.map((episode, index) => (
               <div className="border border-ld rounded-lg px-6 py-4 mb-6">
-                <div className="flex justify-between items-center"><h6 className="font-semibold text-base">{episode.title}</h6>
+                <div className="flex justify-between items-center"><h6 className="font-semibold text-base cursor-pointer" onClick={() => router.push(`/entertainment/albums/${params.album_id}/episode/${episode.uuid}/contents`)}>{episode.title}</h6>
                   <div className="flex justify-between items-center">
-                    <p className="ml-2">{formatToLocalDateTime(episode.created_at)}</p>
+                    {isSmallScreen ? <div /> : <p className="ml-2">{formatToLocalDateTime(episode.created_at)}</p>}
                     <Dropdown
                       label=""
                       dismissOnClick={false}
@@ -257,7 +270,7 @@ export default function Page({ params }: {
                       {tableActionData.map((items, index) => (
                         <Dropdown.Item key={index} className="flex gap-3" onClick={() => {
                           if (index == 0) {
-                            router.push(`/entertainment/albums/${params.id}/edit_episode/${episode.uuid}`);
+                            router.push(`/entertainment/albums/${params.album_id}/episode/${episode.uuid}/edit`);
                           }
                           if (index == 1) {
                             setOpenDeleteModal(episode.uuid);
@@ -271,17 +284,24 @@ export default function Page({ params }: {
                       ))}
                     </Dropdown></div>
                 </div>
+                {isSmallScreen ? <p className="text-sm">{formatToLocalDateTime(episode.created_at)}</p> : <div />}
                 {(episode.content_type != null && episode.content_type?.trim() != "") ?
-                  <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
-                    <FaFileArrowDown size={24} />
-                    <div className="w-2" />
-                    <div > <p >{episode.content_type}</p> <p>{bytesToHumanReadable(episode.bytes)}</p> </div>
+                  <div className="flex justify-between items-col-center">
+                    <div className="mt-2 flex items-center">
+                      <FaFile size={24} />
+                      <div className="w-2" />
+                      <div > <p >{episode.content_type}</p> <p>{bytesToHumanReadable(episode.bytes)}</p> </div>
+                    </div>
+                    <button className="bg-green-400 hover:bg-green-500 text-white font-bold px-2 rounded" onClick={() => handleFileClick(episode)}>  {(episode.content_type === 'image/jpeg' || episode.content_type === 'image/png') ? "View" : "Download"} </button>
                   </div>
                   : (episode.file_url != null && episode.file_url?.trim() != "") ?
-                    <div className="mt-2 flex items-center cursor-pointer" onClick={() => handleFileClick(episode)}>
-                      <FaLink size={24} />
-                      <div className="w-2" />
-                      <p >{episode.file_url}</p>
+                    <div className="flex justify-between items-col-center">
+                      <div className="mt-2 flex items-center">
+                        {isSmallScreen ? <div /> : <FaLink size={24} />}
+                        <div className="w-2" />
+                        <p className="flex flex-wrap text-ellipsis overflow-hidden">{episode.file_url}</p>
+                      </div>
+                      <button className="bg-green-400 hover:bg-green-500 text-white font-bold py-1 px-2 rounded" onClick={() => handleFileClick(episode)}> Go </button>
                     </div>
                     : <div />}
               </div>
