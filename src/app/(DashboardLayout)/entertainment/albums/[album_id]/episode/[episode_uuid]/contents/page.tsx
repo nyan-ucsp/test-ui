@@ -1,13 +1,15 @@
 "use client";;
 import Loading from "@/app/(DashboardLayout)/layout/shared/loading/Loading";
 import SomethingWasWrong from "@/app/(DashboardLayout)/layout/shared/reload/something_was_wrong";
+import { bytesToHumanReadable } from "@/utils/converter/converter";
 import { decrypt } from "@/utils/encryption/encryption";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { Alert, Button, Dropdown, Modal } from "flowbite-react";
+import { Alert, Button, Modal } from "flowbite-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
+import { FaFile } from "react-icons/fa6";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { MdAdd } from "react-icons/md";
 
@@ -129,18 +131,6 @@ export default function Page({ params }: {
       setLoading(false);
     }
   };
-
-  /*Table Action*/
-  const tableActionData = [
-    {
-      icon: "solar:pen-new-square-broken",
-      listtitle: "Edit",
-    },
-    {
-      icon: "solar:trash-bin-minimalistic-outline",
-      listtitle: "Delete",
-    },
-  ];
   if (loading) return <Loading />
   if (error != null) return <SomethingWasWrong message={error} onPressedText="Reload" onPressed={() => fetchEpisodeContents()} />
   return (
@@ -224,17 +214,26 @@ export default function Page({ params }: {
           <h2 className="card-title">Contents</h2>
           <Button color="primary" href={`/entertainment/albums/${params.album_id}/episode/${params.episode_uuid}/contents/add`} as={Link}><MdAdd className="h-5 w-5" />Add</Button>
         </div>
-        <div className="mt-6">
-          {episodeContentsData != null && Array.isArray(episodeContentsData.data) && episodeContentsData.data.length > 0 ?
-            episodeContentsData.data.map((episode, index) => (
-              <div> //Todo </div>
-            ))
-            : (
-              <div className="text-center">
-                No contents available.
-              </div>
-            )}
-        </div>
+
+      </div>
+      <div className="mt-6">
+        {episodeContentsData != null && Array.isArray(episodeContentsData.data) && episodeContentsData.data.length > 0 ?
+          episodeContentsData.data.map((episode, index) => (
+            <div> {episode.content_type == "image/jpeg" ? <img src={static_url.concat(episode.url)} alt={episode.uuid} className="w-full" /> :
+              <div className="flex item-center px-2 py-2">
+                <FaFile size={32} className="mr-2 mt-1" />
+                <div >
+                  <p>File Name: {episode.url.split("/")[episode.url.split("/").length - 1] ?? ""}</p>
+                  <p>File Size: {bytesToHumanReadable(episode.bytes)}</p>
+                </div>
+              </div>}
+            </div>
+          ))
+          : (
+            <div className="text-center">
+              No contents available.
+            </div>
+          )}
       </div>
     </>
   );
